@@ -3517,6 +3517,13 @@ class ObsPyck(QtGui.QMainWindow):
         msg += "\nServer: %s" % self.server['Server']
         msg += "\nResponse: %s %s" % (code, message)
         self.critical(msg)
+        try:
+            uploadJane(name, data)
+        except Exception:
+            self.critical("Upload to Jane failed!")
+        else:
+            self.critical("Upload to Jane OK. "
+                          "http://jungle/rest/documents/quakeml/%s" % name)
 
     def deleteEventInSeisHub(self, resource_name):
         """
@@ -3553,6 +3560,12 @@ class ObsPyck(QtGui.QMainWindow):
         msg += "\nServer: %s" % self.server['Server']
         msg += "\nResponse: %s %s" % (code, message)
         self.critical(msg)
+        try:
+            deleteJane(str(resource_name))
+        except Exception:
+            self.critical("Deletion from Jane failed!")
+        else:
+            self.critical("Deletion from Jane OK.")
 
     def clearEvent(self):
         self.info("Clearing previous event data.")
@@ -4247,6 +4260,23 @@ def main():
     obspyck = ObsPyck(clients, streams, options, KEYS)
     qApp.connect(qApp, QtCore.SIGNAL("aboutToQuit()"), obspyck.cleanup)
     os._exit(qApp.exec_())
+
+
+def uploadJane(name, quakeml_string, base_url="http://jungle"):
+    import requests
+    r = requests.put(
+        url=base_url + "/rest/documents/quakeml/%s" % name,
+        data=quakeml_string,
+        auth=("admin", "admin"))
+    assert r.ok
+
+
+def deleteJane(name, base_url="http://jungle"):
+    import requests
+    r = requests.delete(
+        url=base_url + "/rest/documents/quakeml/%s" % name,
+        auth=("admin", "admin"))
+    assert r.ok
 
 
 if __name__ == "__main__":
